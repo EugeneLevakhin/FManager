@@ -1,0 +1,74 @@
+﻿<Window x:Class="FManager.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:FManager"
+        mc:Ignorable="d"
+        Title="FManager" MinHeight="350" MinWidth="600">
+
+    <Window.CommandBindings>
+        <CommandBinding Command="Close" Executed="CommandClose_Executed"></CommandBinding>
+        <CommandBinding Command="Copy" Executed="CommandCopy_Executed"></CommandBinding>
+        <CommandBinding Command="Paste" Executed="CommandPaste_Executed"></CommandBinding>
+    </Window.CommandBindings>
+
+    <Grid ShowGridLines="True">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="20"/>
+            <RowDefinition Height="30"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="25"/>
+        </Grid.RowDefinitions>
+
+        <Menu Grid.Row="0">
+            <MenuItem Header="File">
+                <MenuItem Header="Close" Command="Close"></MenuItem>
+            </MenuItem>
+            <MenuItem Header="Edit">
+                <MenuItem Header="Copy" Command="Copy"></MenuItem>
+                <MenuItem Header="Paste" Command="Paste"></MenuItem>
+            </MenuItem>
+        </Menu>
+
+        <!--<toolButtons>-->
+
+        <Grid Grid.Row="2">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="24"></RowDefinition>
+                <RowDefinition Height="*"></RowDefinition>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="3"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <Grid Grid.Row="0" Grid.Column="0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="25"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Button Name="btnLeftUp" Grid.Column="0" Margin="1" Click="btnUp_Click">
+                    <Image Source="/FManager;component/Resources/upArrow.png"></Image>
+                </Button>
+                <TextBox Name="txtLeftPath" Grid.Column="1" Margin="2" KeyDown="txtPath_KeyDown"></TextBox>
+            </Grid>
+
+            <Grid Grid.Row="0" Grid.Column="2">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="25"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Button Name="btnRightUp" Grid.Column="0" Margin="1" Click="btnUp_Click">
+                    <Image Source="/FManager;component/Resources/upArrow.png"></Image>
+                </Button>
+                <TextBox Name="txtRightPath" Grid.Column="1" Margin="2" KeyDown="txtPath_KeyDown"></TextBox>
+            </Grid>
+
+            <ListBox Name="leftList" Grid.Row="1" Grid.Column="0" Margin="1" KeyboardNavigation.TabIndex="0" AllowDrop="True" Drop="List_Drop" KeyDown="List_KeyDown"></ListBox>
+            <GridSplitter Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Stretch" BorderBrush="Black" BorderThickness="1" Grid.RowSpan="2"></GridSplitter>
+            <ListBox Name="rightList" Grid.Row="1" Grid.Column="2" Margin="1" KeyboardNavigation.TabIndex="1" AllowDrop="True" Drop="List_Drop" KeyDown="List_KeyDown"></ListBox>
+        </Grid>
+    </Grid>
+</Window>

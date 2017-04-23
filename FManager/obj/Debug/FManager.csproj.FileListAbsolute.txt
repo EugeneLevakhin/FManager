@@ -1,0 +1,14 @@
+c:\users\eugen\documents\visual studio 2017\Projects\FManager\FManager\bin\Debug\FManager.exe.config
+c:\users\eugen\documents\visual studio 2017\Projects\FManager\FManager\bin\Debug\FManager.exe
+c:\users\eugen\documents\visual studio 2017\Projects\FManager\FManager\bin\Debug\FManager.pdb
+c:\users\eugen\documents\visual studio 2017\Projects\FManager\FManager\obj\Debug\MainWindow.g.cs
+c:\users\eugen\documents\visual studio 2017\Projects\FManager\FManager\obj\Debug\App.g.cs
+c:\users\eugen\documents\visual studio 2017\Projects\FManager\FManager\obj\Debug\FManager_MarkupCompile.cache
+c:\users\eugen\documents\visual studio 2017\Projects\FManager\FManager\obj\Debug\FManager_MarkupCompile.lref
+c:\users\eugen\documents\visual studio 2017\Projects\FManager\FManager\obj\Debug\MainWindow.baml
+c:\users\eugen\documents\visual studio 2017\Projects\FManager\FManager\obj\Debug\FManager.g.resources
+c:\users\eugen\documents\visual studio 2017\Projects\FManager\FManager\obj\Debug\FManager.Properties.Resources.resources
+c:\users\eugen\documents\visual studio 2017\Projects\FManager\FManager\obj\Debug\FManager.csproj.GenerateResource.Cache
+c:\users\eugen\documents\visual studio 2017\Projects\FManager\FManager\obj\Debug\FManager.exe
+c:\users\eugen\documents\visual studio 2017\Projects\FManager\FManager\obj\Debug\FManager.pdb
+C:\Users\eugen\documents\visual studio 2017\Projects\FManager\FManager\obj\Debug\FManager.csprojResolveAssemblyReference.cache
