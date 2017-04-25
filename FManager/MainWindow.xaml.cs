@@ -29,7 +29,6 @@ namespace FManager
         // TODO: сохранение габаритов и расположения, текущей папки;
         // TODO: копирование, перемещение(drag&Drop) и тд commands
         // TODO: Directory.GetFiles() - searching files
-        // TODO: ListBoxItemS select and move
         // TODO: Directories copiing from drive to another drive
         // TODO: Context Menu
 
@@ -212,6 +211,8 @@ namespace FManager
             listBoxItem.MouseDoubleClick += ListBoxItem_MouseDoubleClick;
             listBoxItem.MouseDown += EventBasedMouseLeftButtonHandler;
             listBoxItem.KeyDown += ListBoxItem_KeyDown;
+            listBoxItem.AllowDrop = true;
+            listBoxItem.Drop += List_Drop;
 
             list.Items.Add(listBoxItem);
         }
@@ -307,46 +308,67 @@ namespace FManager
 
         private void EventBasedMouseLeftButtonHandler(object sender, RoutedEventArgs e)
         {
-            ListBoxItem item = sender as ListBoxItem;
-            ListBox sourceList = item.Parent as ListBox;
-            sourceList.AllowDrop = false;
+            ListBoxItem senderListBoxItem = sender as ListBoxItem;
+            ListBox sourceList = senderListBoxItem.Parent as ListBox;
+    
+            senderListBoxItem.AllowDrop = false;
 
-            if (sourceList.Name == "leftList")
+            List<ListBoxItem> listOfSelectedItems = new List<ListBoxItem>();
+            listOfSelectedItems = sourceList.SelectedItems.OfType<ListBoxItem>().ToList<ListBoxItem>();
+            if (listOfSelectedItems.Count == 0)
             {
-                rightList.AllowDrop = true;
+                listOfSelectedItems.Add(senderListBoxItem);
             }
-            else
-            {
-                leftList.AllowDrop = true;
-            }
-            DragDrop.DoDragDrop(item, item, DragDropEffects.Move);
+
+            DragDrop.DoDragDrop(sourceList, listOfSelectedItems, DragDropEffects.Move);
         }
 
         private void List_Drop(object sender, DragEventArgs e)
         {
-            ListBoxItem movedItem = e.Data.GetData(typeof(ListBoxItem)) as ListBoxItem;
-            string pathOfMovedItem = (movedItem.Parent as ListBox).Tag.ToString();
+            List<ListBoxItem> movedItems = e.Data.GetData(typeof(List<ListBoxItem>)) as List<ListBoxItem>;
 
-            ListBox sourceList = movedItem.Parent as ListBox;
-            ListBox destinationList = sender as ListBox;
+            ListBox sourceList = movedItems[0].Parent as ListBox;
+            ListBox destinationList = null;
+            string destinationPath = string.Empty;
 
-            string fullNameOfMovedFileSystemItem = System.IO.Path.Combine(sourceList.Tag.ToString(), ((movedItem.Content as Grid).Children[1] as Label).Content.ToString());
-            string copyOfMovedFileSystemItem = System.IO.Path.Combine(destinationList.Tag.ToString(), ((movedItem.Content as Grid).Children[1] as Label).Content.ToString());
-
-            if (pathOfMovedItem.Length > 2 && destinationList.Tag.ToString().Length > 2)     // if moved item is drive (or move in list of drives) - disable drop 
+            if (sender is ListBox)
             {
+                destinationList = sender as ListBox;
+                destinationPath = destinationList.Tag.ToString();
+            }
+            else if (sender is ListBoxItem)
+            {
+                ListBoxItem destItem = sender as ListBoxItem;
+                destinationPath = System.IO.Path.Combine((destItem.Parent as ListBox).Tag.ToString(), ((destItem.Content as Grid).Children[1] as Label).Content.ToString());
+            }
+
+            if (sourceList.Tag.ToString().Length < 3 || destinationPath.Length < 3)     // if moved item is drive (or move in list of drives) - disable drop 
+            {
+                return;
+            }
+
+            foreach (var item in movedItems)
+            {
+                string fullNameOfMovedFileSystemItem = System.IO.Path.Combine(sourceList.Tag.ToString(), ((item.Content as Grid).Children[1] as Label).Content.ToString());
+                string copyOfMovedFileSystemItem = System.IO.Path.Combine(destinationPath, ((item.Content as Grid).Children[1] as Label).Content.ToString());
+
                 if (Directory.Exists(fullNameOfMovedFileSystemItem))
                 {
                     DirectoryInfo directory = new DirectoryInfo(fullNameOfMovedFileSystemItem);
                     try
                     {
                         directory.MoveTo(copyOfMovedFileSystemItem);
-                        sourceList.Items.Remove(movedItem);
-                        destinationList.Items.Add(movedItem);
+                        sourceList.Items.Remove(item);
+                        if (sender is ListBox)
+                        {
+                            destinationList.Items.Add(item);
+                        }
+                        e.Handled = true;
                     }
                     catch (Exception ex)
                     {
                         MessageBox.Show(ex.Message);
+                        return;
                     }
                 }
                 else if (File.Exists(fullNameOfMovedFileSystemItem))
@@ -355,18 +377,23 @@ namespace FManager
                     try
                     {
                         movedFile.MoveTo(copyOfMovedFileSystemItem);
-                        sourceList.Items.Remove(movedItem);
-                        destinationList.Items.Add(movedItem);
+                        sourceList.Items.Remove(item);
+                        if (sender is ListBox)
+                        {
+                            destinationList.Items.Add(item);
+                        }
+                        e.Handled = true;
                     }
                     catch (UnauthorizedAccessException ex)
                     {
                         MessageBox.Show(ex.Message + " Try run programm as administrator");
+                        return;
                     }
                     catch (Exception ex)
                     {
                         MessageBox.Show(ex.Message);
+                        return;
                     }
-
                 }
             }
         }
