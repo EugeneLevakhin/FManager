@@ -40,7 +40,7 @@
             </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="3"/>
+                <ColumnDefinition Width="2"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
 
@@ -66,9 +66,9 @@
                 <TextBox Name="txtRightPath" Grid.Column="1" Margin="2" KeyDown="txtPath_KeyDown"></TextBox>
             </Grid>
 
-            <ListBox Name="leftList" Grid.Row="1" Grid.Column="0" Margin="1" KeyboardNavigation.TabIndex="0" AllowDrop="True" Drop="List_Drop" KeyDown="List_KeyDown"></ListBox>
+            <ListBox Name="leftList" Grid.Row="1" Grid.Column="0" Margin="1" KeyboardNavigation.TabIndex="0" AllowDrop="True" Drop="List_Drop" KeyDown="List_KeyDown" SelectionMode="Extended"></ListBox>
             <GridSplitter Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Stretch" BorderBrush="Black" BorderThickness="1" Grid.RowSpan="2"></GridSplitter>
-            <ListBox Name="rightList" Grid.Row="1" Grid.Column="2" Margin="1" KeyboardNavigation.TabIndex="1" AllowDrop="True" Drop="List_Drop" KeyDown="List_KeyDown"></ListBox>
+            <ListBox Name="rightList" Grid.Row="1" Grid.Column="2" Margin="1" KeyboardNavigation.TabIndex="1" AllowDrop="True" Drop="List_Drop" KeyDown="List_KeyDown" SelectionMode="Extended"></ListBox>
         </Grid>
     </Grid>
 </Window>

@@ -16,6 +16,8 @@ using System.Windows.Shapes;
 using System.IO;
 using System.Drawing;
 using System.Windows.Interop;
+using System.Security.AccessControl;
+using System.Security.Principal;
 
 namespace FManager
 {
@@ -24,19 +26,22 @@ namespace FManager
     /// </summary>
     public partial class MainWindow : Window
     {
-        //TODO:  сохранение габаритов и расположения, текущей папки;
-        //TODO: копирование, перемещение(drag&Drop) и тд commands
-        // Directory.GetFiles() - searching files
+        // TODO: сохранение габаритов и расположения, текущей папки;
+        // TODO: копирование, перемещение(drag&Drop) и тд commands
+        // TODO: Directory.GetFiles() - searching files
+        // TODO: ListBoxItemS select and move
+        // TODO: Directories copiing from drive to another drive
+        // TODO: Context Menu
 
         public MainWindow()
         {
             InitializeComponent();
-            EventManager.RegisterClassHandler(typeof(ListBoxItem), ListBoxItem.MouseLeftButtonDownEvent, new RoutedEventHandler(EventBasedMouseLeftButtonHandler));
+            EventManager.RegisterClassHandler(typeof(ListBoxItem), ListBoxItem.MouseLeftButtonDownEvent, new RoutedEventHandler(EventBasedMouseLeftButtonHandler));   // for ListBoxItem, because native event MouseDown don't rise 
             InRootOfFileSystem(leftList);
             InRootOfFileSystem(rightList);
         }
 
-        private void InRootOfFileSystem(ListBox list)
+        private void InRootOfFileSystem(ListBox list)                                              // go to list of drives
         {
             list.Items.Clear();
 
@@ -75,74 +80,64 @@ namespace FManager
                 currentFolderOfActiveList = rightList.Tag.ToString();
             }
 
-            string sl = "\\";
-            if (currentFolderOfActiveList == string.Empty || currentFolderOfActiveList[currentFolderOfActiveList.Length - 1].Equals('\\'))
-            {
-                sl = string.Empty;
-            }
-            string fullFileName = currentFolderOfActiveList + sl + (tempGrid.Children[1] as Label).Content;
+            string fullNameOfFileSystemItem = System.IO.Path.Combine(currentFolderOfActiveList, (tempGrid.Children[1] as Label).Content.ToString());
 
-            FileInfo file = new FileInfo(fullFileName);
-
-            if (file.Extension == string.Empty)   /// if folder
+            FileInfo file = new FileInfo(fullNameOfFileSystemItem);
+            if (Directory.Exists(fullNameOfFileSystemItem))
             {
-                if (currentFolderOfActiveList != string.Empty)
-                {
-                    string s = "\\";
-                    if (currentFolderOfActiveList[currentFolderOfActiveList.Length - 1].Equals('\\'))
-                    {
-                        s = string.Empty;
-                    }
-                    currentFolderOfActiveList = currentFolderOfActiveList + s + (tempGrid.Children[1] as Label).Content.ToString();
-                }
-                else
-                {
-                    currentFolderOfActiveList = (tempGrid.Children[1] as Label).Content.ToString().Substring(0, 3);
-                }
+                currentFolderOfActiveList = System.IO.Path.Combine(currentFolderOfActiveList, (tempGrid.Children[1] as Label).Content.ToString());
+
                 parrentOfSender.Tag = currentFolderOfActiveList;
                 GoTo(parrentOfSender);
             }
-            else
+            else if (File.Exists(fullNameOfFileSystemItem))                                                              // open file
             {
-                System.Diagnostics.Process.Start(fullFileName);
+                System.Diagnostics.Process.Start(fullNameOfFileSystemItem);
             }
         }
 
         private void GoTo(ListBox list)
         {
-            list.Items.Clear();
-
-            string currentFolderOfActiveList = list.Tag.ToString();
-
-            DirectoryInfo directoryInfo = new DirectoryInfo(currentFolderOfActiveList);
-            DirectoryInfo[] directories = directoryInfo.GetDirectories();
-
-            foreach (var directory in directories)
+            if (list.Tag.ToString() != string.Empty)
             {
-                if (directory.Attributes.Equals(FileAttributes.System | FileAttributes.Hidden | FileAttributes.Directory | FileAttributes.ReparsePoint | FileAttributes.NotContentIndexed)
-                    || directory.Attributes.Equals(FileAttributes.System | FileAttributes.Hidden | FileAttributes.Directory)
-                    || directory.Attributes.Equals(FileAttributes.Hidden | FileAttributes.Directory)
-                    || directory.Attributes.Equals(FileAttributes.System | FileAttributes.Hidden | FileAttributes.Directory | FileAttributes.NotContentIndexed)
-                    )
+                list.Items.Clear();
+
+                string currentFolderOfActiveList = list.Tag.ToString();
+
+                DirectoryInfo directoryInfo = new DirectoryInfo(currentFolderOfActiveList);
+                DirectoryInfo[] directories = directoryInfo.GetDirectories();
+
+                foreach (var directory in directories)
                 {
-                    continue;
+                    if (directory.Attributes.Equals(FileAttributes.System | FileAttributes.Hidden | FileAttributes.Directory | FileAttributes.ReparsePoint | FileAttributes.NotContentIndexed)
+                        || directory.Attributes.Equals(FileAttributes.System | FileAttributes.Hidden | FileAttributes.Directory)
+                        || directory.Attributes.Equals(FileAttributes.Hidden | FileAttributes.Directory)
+                        || directory.Attributes.Equals(FileAttributes.System | FileAttributes.Hidden | FileAttributes.Directory | FileAttributes.NotContentIndexed)
+                        )
+                    {
+                        continue;
+                    }
+                    AddListBoxItem(directory, list);
                 }
-                AddListBoxItem(directory, list);
-            }
 
-            FileInfo[] files = directoryInfo.GetFiles();
-            foreach (var file in files)
-            {
-                AddListBoxItem(file, list);
-            }
+                FileInfo[] files = directoryInfo.GetFiles();
+                foreach (var file in files)
+                {
+                    AddListBoxItem(file, list);
+                }
 
-            if (list.Name == "leftList")
-            {
-                txtLeftPath.Text = currentFolderOfActiveList;
+                if (list.Name == "leftList")
+                {
+                    txtLeftPath.Text = currentFolderOfActiveList;
+                }
+                else
+                {
+                    txtRightPath.Text = currentFolderOfActiveList;
+                }
             }
             else
             {
-                txtRightPath.Text = currentFolderOfActiveList;
+                InRootOfFileSystem(list);
             }
 
         }
@@ -240,7 +235,7 @@ namespace FManager
                 tempList = rightList;
             }
 
-            if (currentFolderOfActiveList.Length > 3)
+            if (currentFolderOfActiveList.Length > 3)                          // deleting last part of path ant goto up folder
             {
                 int i = currentFolderOfActiveList.Length - 1;
                 while (!currentFolderOfActiveList[i].Equals('\\'))
@@ -292,14 +287,18 @@ namespace FManager
 
                 previosPath = listBox.Tag.ToString();
 
+                if (changedPath.Length == 1)
+                {
+                    changedPath += ":\\";
+                }
                 listBox.Tag = changedPath;
                 try
                 {
                     GoTo(listBox);
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
-                    MessageBox.Show("Path not found");
+                    MessageBox.Show(ex.Message);
                     listBox.Tag = previosPath;
                     GoTo(listBox);
                 }
@@ -328,16 +327,50 @@ namespace FManager
             ListBoxItem movedItem = e.Data.GetData(typeof(ListBoxItem)) as ListBoxItem;
             string pathOfMovedItem = (movedItem.Parent as ListBox).Tag.ToString();
 
+            ListBox sourceList = movedItem.Parent as ListBox;
             ListBox destinationList = sender as ListBox;
 
-            if (pathOfMovedItem.Length > 2 && destinationList.Tag.ToString().Length > 2)     // if moved item is drive - disable drop (or move in list of drives)
+            string fullNameOfMovedFileSystemItem = System.IO.Path.Combine(sourceList.Tag.ToString(), ((movedItem.Content as Grid).Children[1] as Label).Content.ToString());
+            string copyOfMovedFileSystemItem = System.IO.Path.Combine(destinationList.Tag.ToString(), ((movedItem.Content as Grid).Children[1] as Label).Content.ToString());
+
+            if (pathOfMovedItem.Length > 2 && destinationList.Tag.ToString().Length > 2)     // if moved item is drive (or move in list of drives) - disable drop 
             {
-                ListBox sourceList = movedItem.Parent as ListBox;
-                sourceList.Items.Remove(movedItem);
-                destinationList.Items.Add(movedItem);
+                if (Directory.Exists(fullNameOfMovedFileSystemItem))
+                {
+                    DirectoryInfo directory = new DirectoryInfo(fullNameOfMovedFileSystemItem);
+                    try
+                    {
+                        directory.MoveTo(copyOfMovedFileSystemItem);
+                        sourceList.Items.Remove(movedItem);
+                        destinationList.Items.Add(movedItem);
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show(ex.Message);
+                    }
+                }
+                else if (File.Exists(fullNameOfMovedFileSystemItem))
+                {
+                    FileInfo movedFile = new FileInfo(fullNameOfMovedFileSystemItem);
+                    try
+                    {
+                        movedFile.MoveTo(copyOfMovedFileSystemItem);
+                        sourceList.Items.Remove(movedItem);
+                        destinationList.Items.Add(movedItem);
+                    }
+                    catch (UnauthorizedAccessException ex)
+                    {
+                        MessageBox.Show(ex.Message + " Try run programm as administrator");
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show(ex.Message);
+                    }
+
+                }
             }
         }
-      
+
         private void List_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.Key == Key.Back)
