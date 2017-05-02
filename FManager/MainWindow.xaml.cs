@@ -26,11 +26,14 @@ namespace FManager
     /// </summary>
     public partial class MainWindow : Window
     {
-        // TODO: сохранение габаритов и расположения, текущей папки;
-        // TODO: копирование, перемещение(drag&Drop) и тд commands
+        // TODO: saving sizes and location; current folder;
+        // TODO: Commands
         // TODO: Directory.GetFiles() - searching files
-        // TODO: Directories copiing from drive to another drive
         // TODO: Context Menu
+        // TODO: replace folders
+        // TODO: Threading
+
+        private object lockObj = new object();
 
         public MainWindow()
         {
@@ -38,6 +41,7 @@ namespace FManager
             EventManager.RegisterClassHandler(typeof(ListBoxItem), ListBoxItem.MouseLeftButtonDownEvent, new RoutedEventHandler(EventBasedMouseLeftButtonHandler));   // for ListBoxItem, because native event MouseDown don't rise 
             InRootOfFileSystem(leftList);
             InRootOfFileSystem(rightList);
+
         }
 
         private void InRootOfFileSystem(ListBox list)                                              // go to list of drives
@@ -87,7 +91,7 @@ namespace FManager
                 currentFolderOfActiveList = System.IO.Path.Combine(currentFolderOfActiveList, (tempGrid.Children[1] as Label).Content.ToString());
 
                 parrentOfSender.Tag = currentFolderOfActiveList;
-                GoTo(parrentOfSender);
+                GoToCurrentFolder(parrentOfSender);
             }
             else if (File.Exists(fullNameOfFileSystemItem))                                                              // open file
             {
@@ -95,50 +99,52 @@ namespace FManager
             }
         }
 
-        private void GoTo(ListBox list)
+        private void GoToCurrentFolder(ListBox list)
         {
-            if (list.Tag.ToString() != string.Empty)
+            lock (lockObj)
             {
-                list.Items.Clear();
-
-                string currentFolderOfActiveList = list.Tag.ToString();
-
-                DirectoryInfo directoryInfo = new DirectoryInfo(currentFolderOfActiveList);
-                DirectoryInfo[] directories = directoryInfo.GetDirectories();
-
-                foreach (var directory in directories)
+                if (list.Tag.ToString() != string.Empty)
                 {
-                    if (directory.Attributes.Equals(FileAttributes.System | FileAttributes.Hidden | FileAttributes.Directory | FileAttributes.ReparsePoint | FileAttributes.NotContentIndexed)
-                        || directory.Attributes.Equals(FileAttributes.System | FileAttributes.Hidden | FileAttributes.Directory)
-                        || directory.Attributes.Equals(FileAttributes.Hidden | FileAttributes.Directory)
-                        || directory.Attributes.Equals(FileAttributes.System | FileAttributes.Hidden | FileAttributes.Directory | FileAttributes.NotContentIndexed)
-                        )
+                    list.Items.Clear();
+
+                    string currentFolderOfActiveList = list.Tag.ToString();
+
+                    DirectoryInfo directoryInfo = new DirectoryInfo(currentFolderOfActiveList);
+                    DirectoryInfo[] directories = directoryInfo.GetDirectories();
+
+                    foreach (var directory in directories)
                     {
-                        continue;
+                        if (directory.Attributes.Equals(FileAttributes.System | FileAttributes.Hidden | FileAttributes.Directory | FileAttributes.ReparsePoint | FileAttributes.NotContentIndexed)
+                            || directory.Attributes.Equals(FileAttributes.System | FileAttributes.Hidden | FileAttributes.Directory)
+                            || directory.Attributes.Equals(FileAttributes.Hidden | FileAttributes.Directory)
+                            || directory.Attributes.Equals(FileAttributes.System | FileAttributes.Hidden | FileAttributes.Directory | FileAttributes.NotContentIndexed)
+                            )
+                        {
+                            continue;
+                        }
+                        AddListBoxItem(directory, list);
                     }
-                    AddListBoxItem(directory, list);
-                }
 
-                FileInfo[] files = directoryInfo.GetFiles();
-                foreach (var file in files)
-                {
-                    AddListBoxItem(file, list);
-                }
+                    FileInfo[] files = directoryInfo.GetFiles();
+                    foreach (var file in files)
+                    {
+                        AddListBoxItem(file, list);
+                    }
 
-                if (list.Name == "leftList")
-                {
-                    txtLeftPath.Text = currentFolderOfActiveList;
+                    if (list.Name == "leftList")
+                    {
+                        txtLeftPath.Text = currentFolderOfActiveList;
+                    }
+                    else
+                    {
+                        txtRightPath.Text = currentFolderOfActiveList;
+                    }
                 }
                 else
                 {
-                    txtRightPath.Text = currentFolderOfActiveList;
+                    InRootOfFileSystem(list);
                 }
             }
-            else
-            {
-                InRootOfFileSystem(list);
-            }
-
         }
 
         private void AddListBoxItem(object fileSystemItem, ListBox list)
@@ -211,8 +217,16 @@ namespace FManager
             listBoxItem.MouseDoubleClick += ListBoxItem_MouseDoubleClick;
             listBoxItem.MouseDown += EventBasedMouseLeftButtonHandler;
             listBoxItem.KeyDown += ListBoxItem_KeyDown;
-            listBoxItem.AllowDrop = true;
-            listBoxItem.Drop += List_Drop;
+            if (!(fileSystemItem is FileInfo))
+            {
+                listBoxItem.AllowDrop = true;
+                listBoxItem.Drop += List_Drop;
+            }
+
+            if (!(fileSystemItem is DriveInfo))
+            {
+                AddContextMenuToItem(listBoxItem);
+            }
 
             list.Items.Add(listBoxItem);
         }
@@ -249,7 +263,7 @@ namespace FManager
                 }
                 currentFolderOfActiveList = currentFolderOfActiveList.Substring(0, i);
                 tempList.Tag = currentFolderOfActiveList;
-                GoTo(tempList);
+                GoToCurrentFolder(tempList);
             }
             else
             {
@@ -295,13 +309,13 @@ namespace FManager
                 listBox.Tag = changedPath;
                 try
                 {
-                    GoTo(listBox);
+                    GoToCurrentFolder(listBox);
                 }
                 catch (Exception ex)
                 {
                     MessageBox.Show(ex.Message);
                     listBox.Tag = previosPath;
-                    GoTo(listBox);
+                    GoToCurrentFolder(listBox);
                 }
             }
         }
@@ -310,7 +324,7 @@ namespace FManager
         {
             ListBoxItem senderListBoxItem = sender as ListBoxItem;
             ListBox sourceList = senderListBoxItem.Parent as ListBox;
-    
+
             senderListBoxItem.AllowDrop = false;
 
             List<ListBoxItem> listOfSelectedItems = new List<ListBoxItem>();
@@ -340,6 +354,7 @@ namespace FManager
             {
                 ListBoxItem destItem = sender as ListBoxItem;
                 destinationPath = System.IO.Path.Combine((destItem.Parent as ListBox).Tag.ToString(), ((destItem.Content as Grid).Children[1] as Label).Content.ToString());
+                destinationList = (sender as ListBoxItem).Parent as ListBox;
             }
 
             if (sourceList.Tag.ToString().Length < 3 || destinationPath.Length < 3)     // if moved item is drive (or move in list of drives) - disable drop 
@@ -352,11 +367,32 @@ namespace FManager
                 string fullNameOfMovedFileSystemItem = System.IO.Path.Combine(sourceList.Tag.ToString(), ((item.Content as Grid).Children[1] as Label).Content.ToString());
                 string copyOfMovedFileSystemItem = System.IO.Path.Combine(destinationPath, ((item.Content as Grid).Children[1] as Label).Content.ToString());
 
-                if (Directory.Exists(fullNameOfMovedFileSystemItem))
+                if (Directory.Exists(fullNameOfMovedFileSystemItem))          // if folder
                 {
-                    DirectoryInfo directory = new DirectoryInfo(fullNameOfMovedFileSystemItem);
-                    try
+                    if (System.IO.Path.GetPathRoot(fullNameOfMovedFileSystemItem) != System.IO.Path.GetPathRoot(copyOfMovedFileSystemItem))   // if drives is different
                     {
+                        //CopyFolders(fullNameOfMovedFileSystemItem, copyOfMovedFileSystemItem);
+                        //sourceList.Items.Remove(item);
+                        //if (sender is ListBox)
+                        //{
+                        //    destinationList.Items.Add(item);
+                        //}
+                        //GoToCurrentFolder(sourceList);
+                        //e.Handled = true;
+                        Task task = CopyFoldersAsync(fullNameOfMovedFileSystemItem, copyOfMovedFileSystemItem);
+                        e.Handled = true;
+                        task.ContinueWith(t => this.Dispatcher.Invoke(() =>
+                        {
+                            GoToCurrentFolder(sourceList);
+                            GoToCurrentFolder(destinationList);
+                            txtStatus.Text = "";
+                        }));
+                    }
+                    else
+                    {
+                        DirectoryInfo directory = new DirectoryInfo(fullNameOfMovedFileSystemItem);
+                        //try
+                        //{
                         directory.MoveTo(copyOfMovedFileSystemItem);
                         sourceList.Items.Remove(item);
                         if (sender is ListBox)
@@ -364,17 +400,22 @@ namespace FManager
                             destinationList.Items.Add(item);
                         }
                         e.Handled = true;
+                        //}
+                        //catch (Exception ex)
+                        //{
+                        //    MessageBox.Show(ex.Message);
+                        //    CopyFolders(fullNameOfMovedFileSystemItem, copyOfMovedFileSystemItem);
+                        //    e.Handled = true;
+                        //    return;
+                        //}
                     }
-                    catch (Exception ex)
-                    {
-                        MessageBox.Show(ex.Message);
-                        return;
-                    }
+
                 }
-                else if (File.Exists(fullNameOfMovedFileSystemItem))
+                else if (File.Exists(fullNameOfMovedFileSystemItem))               // if file
                 {
                     FileInfo movedFile = new FileInfo(fullNameOfMovedFileSystemItem);
-                    try
+
+                    if (System.IO.Path.GetPathRoot(fullNameOfMovedFileSystemItem) == System.IO.Path.GetPathRoot(copyOfMovedFileSystemItem))   // if drives is different
                     {
                         movedFile.MoveTo(copyOfMovedFileSystemItem);
                         sourceList.Items.Remove(item);
@@ -384,15 +425,32 @@ namespace FManager
                         }
                         e.Handled = true;
                     }
-                    catch (UnauthorizedAccessException ex)
+                    else
                     {
-                        MessageBox.Show(ex.Message + " Try run programm as administrator");
-                        return;
-                    }
-                    catch (Exception ex)
-                    {
-                        MessageBox.Show(ex.Message);
-                        return;
+                        Task task = Task.Factory.StartNew(() =>
+                        {
+                            try
+                            {
+                                movedFile.CopyTo(copyOfMovedFileSystemItem);
+                            }
+                            catch (UnauthorizedAccessException ex)
+                            {
+                                MessageBox.Show(ex.Message + " Try run programm as administrator");
+                                e.Handled = true;
+                                return;
+                            }
+                            catch (Exception ex)
+                            {
+                                MessageBox.Show(ex.Message);
+                                e.Handled = true;
+                                return;
+                            }
+                        });
+                        task.ContinueWith(t => this.Dispatcher.Invoke(() =>
+                        {
+                            GoToCurrentFolder(sourceList);
+                            GoToCurrentFolder(destinationList);
+                        }));
                     }
                 }
             }
@@ -411,6 +469,82 @@ namespace FManager
                     btnUp_Click(btnRightUp, null);
                 }
             }
+        }
+
+        private void CopyFolders(string sourceFolder, string targetFolder)
+        {
+            DirectoryInfo sourceDir = new DirectoryInfo(sourceFolder);
+
+            DirectoryInfo directory = Directory.CreateDirectory(targetFolder);
+
+            foreach (var file in sourceDir.GetFiles())
+            {
+                file.CopyTo(System.IO.Path.Combine(targetFolder, file.Name));
+            }
+
+            foreach (var dir in sourceDir.GetDirectories())
+            {
+                CopyFolders(dir.FullName, System.IO.Path.Combine(targetFolder, dir.Name));
+            }
+        }
+
+        private void CopyFoldersA(object pairOfPath)
+        {
+            string targetFolder = (pairOfPath as PairOfPath).DestinationPath;
+
+            DirectoryInfo sourceDir = new DirectoryInfo((pairOfPath as PairOfPath).SourcePath);
+            DirectoryInfo directory = Directory.CreateDirectory(targetFolder);
+
+            foreach (var file in sourceDir.GetFiles())
+            {
+                this.Dispatcher.Invoke(() => txtStatus.Text = "Copying " + file.Name);
+                file.CopyTo(System.IO.Path.Combine(targetFolder, file.Name));
+            }
+
+            foreach (var dir in sourceDir.GetDirectories())
+            {
+                CopyFoldersA(new PairOfPath(dir.FullName, System.IO.Path.Combine(targetFolder, dir.Name)));
+            }
+        }
+
+        private async Task CopyFoldersAsync(string sourceFolder, string targetFolder)
+        {
+            await Task.Factory.StartNew(CopyFoldersA, new PairOfPath(sourceFolder, targetFolder));
+        }
+
+        private void AddContextMenuToItem(ListBoxItem item)
+        {
+            ContextMenu menu = new ContextMenu();
+
+            MenuItem menuItemDelete = new MenuItem();
+            menuItemDelete.Header = "Delete";
+            menuItemDelete.Click += MenuItemDelete_Click;
+            menu.Items.Add(menuItemDelete);
+            item.ContextMenu = menu;
+        }
+
+        private void MenuItemDelete_Click(object sender, RoutedEventArgs e)
+        {
+            MenuItem mi = sender as MenuItem;
+            ContextMenu cm = mi.Parent as ContextMenu;
+            ListBoxItem lbi = cm.PlacementTarget as ListBoxItem;
+            ListBox parrent = lbi.Parent as ListBox;
+            Grid gr = lbi.Content as Grid;
+            Label lb = gr.Children[1] as Label;
+
+            string s = System.IO.Path.Combine(parrent.Tag.ToString(), lb.Content.ToString());
+
+            if (Directory.Exists(s))
+            {
+                DirectoryInfo dir = new DirectoryInfo(s);
+                dir.Delete(true);
+            }
+            else if (File.Exists(s))
+            {
+                FileInfo file = new FileInfo(s);
+                file.Delete();
+            }
+            parrent.Items.Remove(lbi);
         }
     }
 }
