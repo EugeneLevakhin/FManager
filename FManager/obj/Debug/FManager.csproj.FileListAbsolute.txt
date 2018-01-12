@@ -12,3 +12,18 @@ c:\users\eugen\documents\visual studio 2017\Projects\FManager\FManager\obj\Debug
 c:\users\eugen\documents\visual studio 2017\Projects\FManager\FManager\obj\Debug\FManager.exe
 c:\users\eugen\documents\visual studio 2017\Projects\FManager\FManager\obj\Debug\FManager.pdb
 C:\Users\eugen\documents\visual studio 2017\Projects\FManager\FManager\obj\Debug\FManager.csprojResolveAssemblyReference.cache
+C:\Users\eugen\source\repos\FManager\FManager\bin\Debug\FManager.exe.config
+C:\Users\eugen\source\repos\FManager\FManager\bin\Debug\FManager.exe
+C:\Users\eugen\source\repos\FManager\FManager\bin\Debug\FManager.pdb
+C:\Users\eugen\source\repos\FManager\FManager\obj\Debug\FManager.csprojResolveAssemblyReference.cache
+C:\Users\eugen\source\repos\FManager\FManager\obj\Debug\MainWindow.g.cs
+C:\Users\eugen\source\repos\FManager\FManager\obj\Debug\App.g.cs
+C:\Users\eugen\source\repos\FManager\FManager\obj\Debug\FManager_MarkupCompile.cache
+C:\Users\eugen\source\repos\FManager\FManager\obj\Debug\FManager_MarkupCompile.lref
+C:\Users\eugen\source\repos\FManager\FManager\obj\Debug\MainWindow.baml
+C:\Users\eugen\source\repos\FManager\FManager\obj\Debug\FManager.g.resources
+C:\Users\eugen\source\repos\FManager\FManager\obj\Debug\FManager.Properties.Resources.resources
+C:\Users\eugen\source\repos\FManager\FManager\obj\Debug\FManager.csproj.GenerateResource.Cache
+C:\Users\eugen\source\repos\FManager\FManager\obj\Debug\FManager.csproj.CoreCompileInputs.cache
+C:\Users\eugen\source\repos\FManager\FManager\obj\Debug\FManager.exe
+C:\Users\eugen\source\repos\FManager\FManager\obj\Debug\FManager.pdb

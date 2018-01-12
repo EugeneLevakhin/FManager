@@ -26,7 +26,7 @@ namespace FManager
     /// </summary>
     public partial class MainWindow : Window
     {
-        // TODO: saving sizes and location; current folder;
+        // TODO: run in last folder
         // TODO: Commands
         // TODO: Directory.GetFiles() - searching files
         // TODO: Context Menu
@@ -38,6 +38,12 @@ namespace FManager
         public MainWindow()
         {
             InitializeComponent();
+
+            Left = Properties.Settings.Default.WindowPosition.Left;
+            Top = Properties.Settings.Default.WindowPosition.Top;
+            Width = Properties.Settings.Default.WindowPosition.Width;
+            Height = Properties.Settings.Default.WindowPosition.Height;
+
             EventManager.RegisterClassHandler(typeof(ListBoxItem), ListBoxItem.MouseLeftButtonDownEvent, new RoutedEventHandler(EventBasedMouseLeftButtonHandler));   // for ListBoxItem, because native event MouseDown don't rise 
             InRootOfFileSystem(leftList);
             InRootOfFileSystem(rightList);
@@ -545,6 +551,12 @@ namespace FManager
                 file.Delete();
             }
             parrent.Items.Remove(lbi);
+        }
+
+        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            Properties.Settings.Default.WindowPosition = this.RestoreBounds;
+            Properties.Settings.Default.Save();
         }
     }
 }
