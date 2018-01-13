@@ -26,7 +26,6 @@ namespace FManager
     /// </summary>
     public partial class MainWindow : Window
     {
-        // TODO: run in last folder
         // TODO: Commands
         // TODO: Directory.GetFiles() - searching files
         // TODO: Context Menu
@@ -45,8 +44,30 @@ namespace FManager
             Height = Properties.Settings.Default.WindowPosition.Height;
 
             EventManager.RegisterClassHandler(typeof(ListBoxItem), ListBoxItem.MouseLeftButtonDownEvent, new RoutedEventHandler(EventBasedMouseLeftButtonHandler));   // for ListBoxItem, because native event MouseDown don't rise 
-            InRootOfFileSystem(leftList);
-            InRootOfFileSystem(rightList);
+
+            leftList.Tag = Properties.Settings.Default.leftListPath;
+            rightList.Tag = Properties.Settings.Default.rightListPath;
+
+            try
+            {
+                GoToCurrentFolder(leftList);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+                InRootOfFileSystem(leftList);
+            }
+
+            try
+            {
+                GoToCurrentFolder(rightList);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+                InRootOfFileSystem(rightList); ;
+            }
+
 
         }
 
@@ -556,6 +577,10 @@ namespace FManager
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
             Properties.Settings.Default.WindowPosition = this.RestoreBounds;
+
+            Properties.Settings.Default.leftListPath = leftList.Tag.ToString();
+            Properties.Settings.Default.rightListPath = rightList.Tag.ToString();
+
             Properties.Settings.Default.Save();
         }
     }

@@ -34,5 +34,29 @@ namespace FManager.Properties {
                 this["WindowPosition"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string leftListPath {
+            get {
+                return ((string)(this["leftListPath"]));
+            }
+            set {
+                this["leftListPath"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string rightListPath {
+            get {
+                return ((string)(this["rightListPath"]));
+            }
+            set {
+                this["rightListPath"] = value;
+            }
+        }
     }
 }
