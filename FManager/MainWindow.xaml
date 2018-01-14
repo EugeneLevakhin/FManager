@@ -13,7 +13,7 @@
         <CommandBinding Command="Paste" Executed="CommandPaste_Executed"></CommandBinding>
     </Window.CommandBindings>
 
-    <Grid ShowGridLines="True">
+    <Grid >
         <Grid.RowDefinitions>
             <RowDefinition Height="20"/>
             <RowDefinition Height="30"/>
@@ -21,11 +21,11 @@
             <RowDefinition Height="25"/>
         </Grid.RowDefinitions>
 
-        <Menu Grid.Row="0">
-            <MenuItem Header="File">
+        <Menu Grid.Row="0" IsTabStop="False">
+            <MenuItem Header="File" IsTabStop="False">
                 <MenuItem Header="Close" Command="Close"></MenuItem>
             </MenuItem>
-            <MenuItem Header="Edit">
+            <MenuItem Header="Edit" IsTabStop="False">
                 <MenuItem Header="Copy" Command="Copy"></MenuItem>
                 <MenuItem Header="Paste" Command="Paste"></MenuItem>
             </MenuItem>
@@ -49,10 +49,10 @@
                     <ColumnDefinition Width="25"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
-                <Button Name="btnLeftUp" Grid.Column="0" Margin="1" Click="btnUp_Click">
+                <Button Name="btnLeftUp" Grid.Column="0" Margin="1" Click="btnUp_Click" IsTabStop="False">
                     <Image Source="/FManager;component/Resources/upArrow.png"></Image>
                 </Button>
-                <TextBox Name="txtLeftPath" Grid.Column="1" Margin="2" KeyDown="txtPath_KeyDown"></TextBox>
+                <TextBox Name="txtLeftPath" Grid.Column="1" Margin="2" KeyDown="txtPath_KeyDown" IsTabStop ="False"></TextBox>
             </Grid>
 
             <Grid Grid.Row="0" Grid.Column="2">
@@ -60,24 +60,18 @@
                     <ColumnDefinition Width="25"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
-                <Button Name="btnRightUp" Grid.Column="0" Margin="1" Click="btnUp_Click">
+                <Button Name="btnRightUp" Grid.Column="0" Margin="1" Click="btnUp_Click" IsTabStop="False">
                     <Image Source="/FManager;component/Resources/upArrow.png"></Image>
                 </Button>
-                <TextBox Name="txtRightPath" Grid.Column="1" Margin="2" KeyDown="txtPath_KeyDown"></TextBox>
+                <TextBox Name="txtRightPath" Grid.Column="1" Margin="2" KeyDown="txtPath_KeyDown" IsTabStop="False"></TextBox>
             </Grid>
 
-            <ListBox Name="leftList" Grid.Row="1" Grid.Column="0" Margin="1" KeyboardNavigation.TabIndex="0" AllowDrop="True" Drop="List_Drop" KeyDown="List_KeyDown" SelectionMode="Extended">
-                <ListBox.ContextMenu>
-                    <ContextMenu>
-                        <MenuItem Header="New"></MenuItem>
-                    </ContextMenu>
-                </ListBox.ContextMenu>
-            </ListBox>
-            <GridSplitter Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Stretch" BorderBrush="Black" BorderThickness="1" Grid.RowSpan="2"></GridSplitter>
+            <ListBox Name="leftList" Grid.Row="1" Grid.Column="0" Margin="1" KeyboardNavigation.TabIndex="0" AllowDrop="True" Drop="List_Drop" KeyDown="List_KeyDown" SelectionMode="Extended"></ListBox>
+            <GridSplitter Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Stretch" BorderBrush="Black" BorderThickness="1" Grid.RowSpan="2" IsTabStop="False"></GridSplitter>
             <ListBox Name="rightList" Grid.Row="1" Grid.Column="2" Margin="1" KeyboardNavigation.TabIndex="1" AllowDrop="True" Drop="List_Drop" KeyDown="List_KeyDown" SelectionMode="Extended"></ListBox>
         </Grid>
 
-        <StatusBar  Grid.Row="3">
+        <StatusBar  Grid.Row="3" IsTabStop="False">
             <TextBlock Name="txtStatus"></TextBlock>
         </StatusBar>
     </Grid>

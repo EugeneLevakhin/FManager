@@ -26,6 +26,7 @@ namespace FManager
     /// </summary>
     public partial class MainWindow : Window
     {
+        // TODO: Remove commented code
         // TODO: Commands
         // TODO: Directory.GetFiles() - searching files
         // TODO: Context Menu
