@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace FManager
 {
-    class PairOfPath
+    class PairOfPath                                    // class for representation pair of folders path for copying async
     {
         private string sourcePath;
 

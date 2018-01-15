@@ -18,6 +18,7 @@ using System.Drawing;
 using System.Windows.Interop;
 using System.Security.AccessControl;
 using System.Security.Principal;
+using System.Threading;
 
 namespace FManager
 {
@@ -27,11 +28,15 @@ namespace FManager
     public partial class MainWindow : Window
     {
         // TODO: Remove commented code
+        // TODO: clip time of loading ico images
+        // TODO: display progress bar during copying
         // TODO: Commands
         // TODO: Directory.GetFiles() - searching files
         // TODO: Context Menu
         // TODO: replace folders
-        // TODO: Threading
+
+        int numberOfAvailableThreads;
+        int numberOfIOThreads;          // not use in this programm
 
         private object lockObj = new object();
 
@@ -69,7 +74,7 @@ namespace FManager
                 InRootOfFileSystem(rightList); ;
             }
 
-
+            ThreadPool.GetAvailableThreads(out numberOfAvailableThreads, out numberOfIOThreads);
         }
 
         private void InRootOfFileSystem(ListBox list)                                              // go to list of drives
@@ -214,12 +219,12 @@ namespace FManager
                     Icon icon;
                     FileInfo fi = fileSystemItem as FileInfo;
                     icon = System.Drawing.Icon.ExtractAssociatedIcon(fi.FullName);
-                    image.Source = Imaging.CreateBitmapSourceFromHIcon(icon.Handle, new Int32Rect(0, 0, icon.Width, icon.Height), BitmapSizeOptions.FromEmptyOptions());
+                    image.Source = Imaging.CreateBitmapSourceFromHIcon(icon.Handle, System.Windows.Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
                 }
             }
 
-            image.Width = 30;
-            image.Height = 30;
+            image.Width = 20;
+            image.Height = 20;
 
             Grid grid = new Grid();
 
@@ -457,6 +462,7 @@ namespace FManager
                     {
                         Task task = Task.Factory.StartNew(() =>
                         {
+
                             try
                             {
                                 movedFile.CopyTo(copyOfMovedFileSystemItem);
@@ -499,22 +505,22 @@ namespace FManager
             }
         }
 
-        private void CopyFolders(string sourceFolder, string targetFolder)
-        {
-            DirectoryInfo sourceDir = new DirectoryInfo(sourceFolder);
+        //private void CopyFolders(string sourceFolder, string targetFolder)
+        //{
+        //    DirectoryInfo sourceDir = new DirectoryInfo(sourceFolder);
 
-            DirectoryInfo directory = Directory.CreateDirectory(targetFolder);
+        //    DirectoryInfo directory = Directory.CreateDirectory(targetFolder);
 
-            foreach (var file in sourceDir.GetFiles())
-            {
-                file.CopyTo(System.IO.Path.Combine(targetFolder, file.Name));
-            }
+        //    foreach (var file in sourceDir.GetFiles())
+        //    {
+        //        file.CopyTo(System.IO.Path.Combine(targetFolder, file.Name));
+        //    }
 
-            foreach (var dir in sourceDir.GetDirectories())
-            {
-                CopyFolders(dir.FullName, System.IO.Path.Combine(targetFolder, dir.Name));
-            }
-        }
+        //    foreach (var dir in sourceDir.GetDirectories())
+        //    {
+        //        CopyFolders(dir.FullName, System.IO.Path.Combine(targetFolder, dir.Name));
+        //    }
+        //}
 
         private void CopyFoldersA(object pairOfPath)
         {
@@ -577,6 +583,16 @@ namespace FManager
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
+            int numberOfAvailableThreads2;
+            int numberOfIOThreads2;
+            ThreadPool.GetAvailableThreads(out numberOfAvailableThreads2, out numberOfIOThreads2);
+            if (numberOfAvailableThreads2 < numberOfAvailableThreads)
+            {
+                if (MessageBox.Show("Comlete all processes?", "Not all processes is comleted", MessageBoxButton.OKCancel) == MessageBoxResult.Cancel)
+                {
+                    e.Cancel = true; ;
+                }
+            }
             Properties.Settings.Default.WindowPosition = this.RestoreBounds;
 
             Properties.Settings.Default.leftListPath = leftList.Tag.ToString();
