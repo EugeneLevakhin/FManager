@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:FManager"
         mc:Ignorable="d"
         Title="FManager" MinHeight="350" MinWidth="600" Closing="Window_Closing">
-
+    
     <Window.CommandBindings>
         <CommandBinding Command="Close" Executed="CommandClose_Executed"></CommandBinding>
         <CommandBinding Command="Copy" Executed="CommandCopy_Executed"></CommandBinding>
@@ -21,7 +21,7 @@
             <RowDefinition Height="25"/>
         </Grid.RowDefinitions>
 
-        <Menu Grid.Row="0" IsTabStop="False">
+        <Menu Grid.Row="0">
             <MenuItem Header="File" IsTabStop="False">
                 <MenuItem Header="Close" Command="Close"></MenuItem>
             </MenuItem>
@@ -47,23 +47,27 @@
             <Grid Grid.Row="0" Grid.Column="0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="25"/>
+                    <ColumnDefinition Width="2*"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
                 <Button Name="btnLeftUp" Grid.Column="0" Margin="1" Click="btnUp_Click" IsTabStop="False">
                     <Image Source="/FManager;component/Resources/upArrow.png"></Image>
                 </Button>
                 <TextBox Name="txtLeftPath" Grid.Column="1" Margin="2" KeyDown="txtPath_KeyDown" IsTabStop ="False"></TextBox>
+                <TextBox Name="txtSearchLeft" Grid.Column="2" Margin="2" KeyDown="txtSearch_KeyDown" IsTabStop="False" Text="search..." FontStyle="Italic" Foreground="Gray" GotFocus="txtSearch_GotFocus" LostFocus="txtSearch_LostFocus"></TextBox>
             </Grid>
 
             <Grid Grid.Row="0" Grid.Column="2">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="25"/>
+                    <ColumnDefinition Width="2*"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
                 <Button Name="btnRightUp" Grid.Column="0" Margin="1" Click="btnUp_Click" IsTabStop="False">
                     <Image Source="/FManager;component/Resources/upArrow.png"></Image>
                 </Button>
                 <TextBox Name="txtRightPath" Grid.Column="1" Margin="2" KeyDown="txtPath_KeyDown" IsTabStop="False"></TextBox>
+                <TextBox Name="txtSearchRight" Grid.Column="2" Margin="2" KeyDown="txtSearch_KeyDown" IsTabStop="False" Text="search..." FontStyle="Italic" Foreground="Gray" GotFocus="txtSearch_GotFocus" LostFocus="txtSearch_LostFocus"></TextBox>
             </Grid>
 
             <ListBox Name="leftList" Grid.Row="1" Grid.Column="0" Margin="1" KeyboardNavigation.TabIndex="0" AllowDrop="True" Drop="List_Drop" KeyDown="List_KeyDown" SelectionMode="Extended"></ListBox>

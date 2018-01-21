@@ -16,8 +16,6 @@ using System.Windows.Shapes;
 using System.IO;
 using System.Drawing;
 using System.Windows.Interop;
-using System.Security.AccessControl;
-using System.Security.Principal;
 using System.Threading;
 
 namespace FManager
@@ -31,9 +29,12 @@ namespace FManager
         // TODO: clip time of loading ico images
         // TODO: display progress bar during copying
         // TODO: Commands
-        // TODO: Directory.GetFiles() - searching files
+        // TODO: searching files Multithreading
         // TODO: Context Menu
         // TODO: replace folders
+
+        List<string> foundFolders = new List<string>();
+        List<string> foundFiles = new List<string>();
 
         int numberOfAvailableThreads;
         int numberOfIOThreads;          // not use in this programm
@@ -116,13 +117,11 @@ namespace FManager
                 currentFolderOfActiveList = rightList.Tag.ToString();
             }
 
-            string fullNameOfFileSystemItem = System.IO.Path.Combine(currentFolderOfActiveList, (tempGrid.Children[1] as Label).Content.ToString());
+            string fullNameOfFileSystemItem = senderListBoxItem.Tag.ToString();
 
-            FileInfo file = new FileInfo(fullNameOfFileSystemItem);
             if (Directory.Exists(fullNameOfFileSystemItem))
             {
-                currentFolderOfActiveList = System.IO.Path.Combine(currentFolderOfActiveList, (tempGrid.Children[1] as Label).Content.ToString());
-
+                currentFolderOfActiveList = fullNameOfFileSystemItem;
                 parrentOfSender.Tag = currentFolderOfActiveList;
                 GoToCurrentFolder(parrentOfSender);
             }
@@ -138,39 +137,54 @@ namespace FManager
             {
                 if (list.Tag.ToString() != string.Empty)
                 {
-                    list.Items.Clear();
-
                     string currentFolderOfActiveList = list.Tag.ToString();
 
                     DirectoryInfo directoryInfo = new DirectoryInfo(currentFolderOfActiveList);
-                    DirectoryInfo[] directories = directoryInfo.GetDirectories();
-
-                    foreach (var directory in directories)
+                    try                                                                             // if directory require admin permission
                     {
-                        if (directory.Attributes.Equals(FileAttributes.System | FileAttributes.Hidden | FileAttributes.Directory | FileAttributes.ReparsePoint | FileAttributes.NotContentIndexed)
-                            || directory.Attributes.Equals(FileAttributes.System | FileAttributes.Hidden | FileAttributes.Directory)
-                            || directory.Attributes.Equals(FileAttributes.Hidden | FileAttributes.Directory)
-                            || directory.Attributes.Equals(FileAttributes.System | FileAttributes.Hidden | FileAttributes.Directory | FileAttributes.NotContentIndexed)
-                            )
+                        DirectoryInfo[] directories = directoryInfo.GetDirectories();
+
+                        list.Items.Clear();
+
+                        foreach (var directory in directories)
                         {
-                            continue;
+                            if (directory.Attributes.Equals(FileAttributes.System | FileAttributes.Hidden | FileAttributes.Directory | FileAttributes.ReparsePoint | FileAttributes.NotContentIndexed)
+                                || directory.Attributes.Equals(FileAttributes.System | FileAttributes.Hidden | FileAttributes.Directory)
+                                || directory.Attributes.Equals(FileAttributes.Hidden | FileAttributes.Directory)
+                                || directory.Attributes.Equals(FileAttributes.System | FileAttributes.Hidden | FileAttributes.Directory | FileAttributes.NotContentIndexed)
+                                )
+                            {
+                                continue;
+                            }
+                            AddListBoxItem(directory, list);
                         }
-                        AddListBoxItem(directory, list);
-                    }
 
-                    FileInfo[] files = directoryInfo.GetFiles();
-                    foreach (var file in files)
-                    {
-                        AddListBoxItem(file, list);
-                    }
+                        FileInfo[] files = directoryInfo.GetFiles();
+                        foreach (var file in files)
+                        {
+                            AddListBoxItem(file, list);
+                        }
 
-                    if (list.Name == "leftList")
-                    {
-                        txtLeftPath.Text = currentFolderOfActiveList;
+                        if (list.Name == "leftList")
+                        {
+                            txtLeftPath.Text = currentFolderOfActiveList;
+                        }
+                        else
+                        {
+                            txtRightPath.Text = currentFolderOfActiveList;
+                        }
                     }
-                    else
+                    catch (Exception ex)
                     {
-                        txtRightPath.Text = currentFolderOfActiveList;
+                        MessageBox.Show(ex.Message);
+                        if (list.Name == "leftList")
+                        {
+                            btnUp_Click(btnLeftUp, null);
+                        }
+                        else
+                        {
+                            btnUp_Click(btnRightUp, null);
+                        }
                     }
                 }
                 else
@@ -193,6 +207,7 @@ namespace FManager
             {
                 DriveInfo drive = fileSystemItem as DriveInfo;
                 nameOfFileSystemItem = drive.Name;
+                listBoxItem.Tag = drive.Name;
 
                 if (drive.DriveType == DriveType.CDRom)
                 {
@@ -206,6 +221,7 @@ namespace FManager
             }
             else if (fileSystemItem is FileSystemInfo)
             {
+                listBoxItem.Tag = (fileSystemItem as FileSystemInfo).FullName;
                 nameOfFileSystemItem = (fileSystemItem as FileSystemInfo).Name;
 
                 if (fileSystemItem is DirectoryInfo)
@@ -283,7 +299,7 @@ namespace FManager
                 tempList = rightList;
             }
 
-            if (currentFolderOfActiveList.Length > 3)                          // deleting last part of path ant goto up folder
+            if (currentFolderOfActiveList.Length > 3)                          // deleting last part of path and goto up folder
             {
                 int i = currentFolderOfActiveList.Length - 1;
                 while (!currentFolderOfActiveList[i].Equals('\\'))
@@ -400,7 +416,7 @@ namespace FManager
                 string fullNameOfMovedFileSystemItem = System.IO.Path.Combine(sourceList.Tag.ToString(), ((item.Content as Grid).Children[1] as Label).Content.ToString());
                 string copyOfMovedFileSystemItem = System.IO.Path.Combine(destinationPath, ((item.Content as Grid).Children[1] as Label).Content.ToString());
 
-                if (Directory.Exists(fullNameOfMovedFileSystemItem))          // if folder
+                if (Directory.Exists(fullNameOfMovedFileSystemItem))                    // if folder
                 {
                     if (System.IO.Path.GetPathRoot(fullNameOfMovedFileSystemItem) != System.IO.Path.GetPathRoot(copyOfMovedFileSystemItem))   // if drives is different
                     {
@@ -444,7 +460,7 @@ namespace FManager
                     }
 
                 }
-                else if (File.Exists(fullNameOfMovedFileSystemItem))               // if file
+                else if (File.Exists(fullNameOfMovedFileSystemItem))                        // if file
                 {
                     FileInfo movedFile = new FileInfo(fullNameOfMovedFileSystemItem);
 
@@ -593,12 +609,130 @@ namespace FManager
                     e.Cancel = true; ;
                 }
             }
+
             Properties.Settings.Default.WindowPosition = this.RestoreBounds;
 
             Properties.Settings.Default.leftListPath = leftList.Tag.ToString();
             Properties.Settings.Default.rightListPath = rightList.Tag.ToString();
 
             Properties.Settings.Default.Save();
+        }
+
+        private void txtSearch_KeyDown(object sender, KeyEventArgs e)
+        {
+            TextBox textBoxSearchSender = sender as TextBox;
+            if (e.Key == Key.Enter && textBoxSearchSender.Text != string.Empty)
+            {
+                ListBox activeListBox = leftList;
+                TextBox activeTxtPath = txtLeftPath;
+
+                if (textBoxSearchSender.Name == "txtSearchRight")
+                {
+                    activeListBox = rightList;
+                    activeTxtPath = txtRightPath;
+                }
+
+                activeListBox.Items.Clear();
+                SearchFileItems(activeListBox.Tag.ToString(), textBoxSearchSender.Text);
+
+                activeTxtPath.Text = string.Empty;
+
+                foreach (var foundFolder in foundFolders)
+                {
+                    DirectoryInfo directory = new DirectoryInfo(foundFolder);
+                    AddListBoxItem(directory, activeListBox);
+                }
+                foreach (var foundFile in foundFiles)
+                {
+                    FileInfo file = new FileInfo(foundFile);
+                    AddListBoxItem(file, activeListBox);
+                }
+
+                foundFolders.Clear();
+                foundFiles.Clear();
+            }
+        }
+
+        private void SearchFileItems(string path, string searchPattern)
+        {
+            searchPattern = searchPattern.ToLower();
+
+            if (path.Equals(""))                 // if list of drives
+            {
+                DriveInfo[] drives = DriveInfo.GetDrives();
+
+                foreach (var drive in drives)
+                {
+                    if (drive.DriveType != DriveType.Removable && drive.DriveType != DriveType.Unknown && drive.DriveType != DriveType.Ram && drive.DriveType != DriveType.Network && drive.IsReady)
+                    {
+                        SearchFileItems(drive.Name, searchPattern);
+                    }
+                }
+            }
+            else
+            {
+                try                                                                             // if directory require admin permission
+                {
+                    DirectoryInfo currentDirectory = new DirectoryInfo(path);
+
+                    DirectoryInfo[] nestedDirectories = currentDirectory.GetDirectories();
+                    foreach (var folder in nestedDirectories)
+                    {
+                        if (folder.Attributes.Equals(FileAttributes.System | FileAttributes.Hidden | FileAttributes.Directory | FileAttributes.ReparsePoint | FileAttributes.NotContentIndexed)
+                                    || folder.Attributes.Equals(FileAttributes.System | FileAttributes.Hidden | FileAttributes.Directory)
+                                    || folder.Attributes.Equals(FileAttributes.Hidden | FileAttributes.Directory)
+                                    || folder.Attributes.Equals(FileAttributes.System | FileAttributes.Hidden | FileAttributes.Directory | FileAttributes.NotContentIndexed)
+                                   )
+                        {
+                            continue;
+                        }
+
+                        if (folder.Name.ToLower().Contains(searchPattern))
+                        {
+                            foundFolders.Add(folder.FullName);
+                        }
+                        SearchFileItems(folder.FullName, searchPattern);
+                    }
+
+                    FileInfo[] nestedFiles = currentDirectory.GetFiles();
+                    foreach (var file in nestedFiles)
+                    {
+                        if (file.Name.ToLower().Contains(searchPattern))
+                        {
+                            foundFiles.Add(file.FullName);
+                        }
+                    }
+                }
+                catch (Exception)
+                {
+                    return;                                                                              // skip folder in recursion search
+                }
+            }
+
+        }
+
+        private void txtSearch_GotFocus(object sender, RoutedEventArgs e)
+        {
+            TextBox tb = sender as TextBox;
+
+            if (tb.Text == "search...")
+            {
+                tb.Text = "";
+                tb.FontStyle = FontStyles.Normal;
+                tb.Foreground = System.Windows.Media.Brushes.Black;
+            }
+        }
+
+        private void txtSearch_LostFocus(object sender, RoutedEventArgs e)
+        {
+            TextBox tb = sender as TextBox;
+
+            if (tb.Text == "")
+            {
+                tb.Text = "search...";
+                tb.FontStyle = FontStyles.Italic;
+                tb.Foreground = System.Windows.Media.Brushes.Gray;
+            }
         }
     }
 }
