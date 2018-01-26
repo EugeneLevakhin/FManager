@@ -25,8 +25,6 @@ namespace FManager
     /// </summary>
     public partial class MainWindow : Window
     {
-        // TODO: List_Drop - destinationPath (from ListBoxItem.Tag)  + readme.md
-        // TODO: Remove commented code
         // TODO: clip time of loading ico images
         // TODO: display progress bar during copying
         // TODO: Commands
@@ -300,7 +298,7 @@ namespace FManager
                 tempList = rightList;
             }
 
-            if (currentFolderOfActiveList.Length > 3)                          // deleting last part of path and goto up folder
+            if (currentFolderOfActiveList.Length > 3)                                     // deleting last part of path and goto up folder
             {
                 int i = currentFolderOfActiveList.Length - 1;
                 while (!currentFolderOfActiveList[i].Equals('\\'))
@@ -418,7 +416,7 @@ namespace FManager
                 string fullNameOfMovedFileSystemItem = item.Tag.ToString();
                 string copyOfMovedFileSystemItem = System.IO.Path.Combine(destinationPath, System.IO.Path.GetFileName(item.Tag.ToString()));
            
-                if (Directory.Exists(fullNameOfMovedFileSystemItem))                    // if folder
+                if (Directory.Exists(fullNameOfMovedFileSystemItem))                                     // if folder
                 {
                     if (System.IO.Path.GetPathRoot(fullNameOfMovedFileSystemItem) != System.IO.Path.GetPathRoot(copyOfMovedFileSystemItem))   // if drives is different
                     {
@@ -444,7 +442,7 @@ namespace FManager
                     }
 
                 }
-                else if (File.Exists(fullNameOfMovedFileSystemItem))                        // if file
+                else if (File.Exists(fullNameOfMovedFileSystemItem))                                      // if file
                 {
                     FileInfo movedFile = new FileInfo(fullNameOfMovedFileSystemItem);
 
@@ -601,31 +599,38 @@ namespace FManager
                 }
 
                 activeListBox.Items.Clear();
-                SearchFileItems(activeListBox.Tag.ToString(), textBoxSearchSender.Text);
-
+                txtStatus.Text = "searching...";
                 activeTxtPath.Text = string.Empty;
 
-                foreach (var foundFolder in foundFolders)
+                Task task = SearchFileItemsAsync(activeListBox.Tag.ToString(), textBoxSearchSender.Text);
+                //e.Handled = true;
+                task.ContinueWith(t => this.Dispatcher.Invoke(() =>
                 {
-                    DirectoryInfo directory = new DirectoryInfo(foundFolder);
-                    AddListBoxItem(directory, activeListBox);
-                }
-                foreach (var foundFile in foundFiles)
-                {
-                    FileInfo file = new FileInfo(foundFile);
-                    AddListBoxItem(file, activeListBox);
-                }
+                    foreach (var foundFolder in foundFolders)
+                    {
+                        DirectoryInfo directory = new DirectoryInfo(foundFolder);
+                        AddListBoxItem(directory, activeListBox);
+                    }
+                    foreach (var foundFile in foundFiles)
+                    {
+                        FileInfo file = new FileInfo(foundFile);
+                        AddListBoxItem(file, activeListBox);
+                    }
 
-                foundFolders.Clear();
-                foundFiles.Clear();
+                    foundFolders.Clear();
+                    foundFiles.Clear();
+
+                    txtStatus.Text = "";
+                }));
             }
         }
 
-        private void SearchFileItems(string path, string searchPattern)
+        private void SearchFileItems(object pathAndSearchPattern)
         {
-            searchPattern = searchPattern.ToLower();
+          string searchPattern = (pathAndSearchPattern as PathAndSearchPattern).SearchPattern.ToLower();
+          string path = (pathAndSearchPattern as PathAndSearchPattern).Path.ToLower();
 
-            if (path.Equals(""))                 // if list of drives
+            if (path.Equals(""))                                                                            // if list of drives
             {
                 DriveInfo[] drives = DriveInfo.GetDrives();
 
@@ -633,7 +638,7 @@ namespace FManager
                 {
                     if (drive.DriveType != DriveType.Removable && drive.DriveType != DriveType.Unknown && drive.DriveType != DriveType.Ram && drive.DriveType != DriveType.Network && drive.IsReady)
                     {
-                        SearchFileItems(drive.Name, searchPattern);
+                        SearchFileItems(new PathAndSearchPattern(drive.Name, searchPattern));
                     }
                 }
             }
@@ -659,7 +664,7 @@ namespace FManager
                         {
                             foundFolders.Add(folder.FullName);
                         }
-                        SearchFileItems(folder.FullName, searchPattern);
+                        SearchFileItems(new PathAndSearchPattern(folder.FullName, searchPattern));
                     }
 
                     FileInfo[] nestedFiles = currentDirectory.GetFiles();
@@ -676,7 +681,11 @@ namespace FManager
                     return;                                                                              // skip folder in recursion search
                 }
             }
+        }
 
+        private async Task SearchFileItemsAsync(string path, string searchPattern)
+        {
+            await Task.Factory.StartNew(SearchFileItems, new PathAndSearchPattern(path, searchPattern));
         }
 
         private void txtSearch_GotFocus(object sender, RoutedEventArgs e)

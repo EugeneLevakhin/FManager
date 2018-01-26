@@ -9,7 +9,6 @@ namespace FManager
     class PairOfPath                                    // class for representation pair of folders path for copying async
     {
         private string sourcePath;
-
         public string SourcePath
         {
             get { return sourcePath; }
@@ -17,7 +16,6 @@ namespace FManager
         }
 
         private string destinationPath;
-
         public string DestinationPath
         {
             get { return destinationPath; }
@@ -29,6 +27,5 @@ namespace FManager
             this.sourcePath = sourcePath;
             this.destinationPath = destinationPath;
         }
-
     }
 }
