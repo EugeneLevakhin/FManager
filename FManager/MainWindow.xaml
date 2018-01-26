@@ -71,7 +71,7 @@
             </Grid>
 
             <ListBox Name="leftList" Grid.Row="1" Grid.Column="0" Margin="1" KeyboardNavigation.TabIndex="0" AllowDrop="True" Drop="List_Drop" KeyDown="List_KeyDown" SelectionMode="Extended"></ListBox>
-            <GridSplitter Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Stretch" BorderBrush="Black" BorderThickness="1" Grid.RowSpan="2" IsTabStop="False"></GridSplitter>
+            <GridSplitter Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Stretch" BorderBrush="DarkGray" BorderThickness="1" Grid.RowSpan="2" IsTabStop="False"></GridSplitter>
             <ListBox Name="rightList" Grid.Row="1" Grid.Column="2" Margin="1" KeyboardNavigation.TabIndex="1" AllowDrop="True" Drop="List_Drop" KeyDown="List_KeyDown" SelectionMode="Extended"></ListBox>
         </Grid>
 

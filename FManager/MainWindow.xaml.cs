@@ -25,6 +25,7 @@ namespace FManager
     /// </summary>
     public partial class MainWindow : Window
     {
+        // TODO: List_Drop - destinationPath (from ListBoxItem.Tag)  + readme.md
         // TODO: Remove commented code
         // TODO: clip time of loading ico images
         // TODO: display progress bar during copying
@@ -394,7 +395,7 @@ namespace FManager
             ListBox destinationList = null;
             string destinationPath = string.Empty;
 
-            if (sender is ListBox)
+            if (sender is ListBox)                                                                  // sender - receiver of drop
             {
                 destinationList = sender as ListBox;
                 destinationPath = destinationList.Tag.ToString();
@@ -402,8 +403,9 @@ namespace FManager
             else if (sender is ListBoxItem)
             {
                 ListBoxItem destItem = sender as ListBoxItem;
-                destinationPath = System.IO.Path.Combine((destItem.Parent as ListBox).Tag.ToString(), ((destItem.Content as Grid).Children[1] as Label).Content.ToString());
-                destinationList = (sender as ListBoxItem).Parent as ListBox;
+                destinationPath = destItem.Tag.ToString();
+
+                destinationList = destItem.Parent as ListBox;
             }
 
             if (sourceList.Tag.ToString().Length < 3 || destinationPath.Length < 3)     // if moved item is drive (or move in list of drives) - disable drop 
@@ -413,21 +415,13 @@ namespace FManager
 
             foreach (var item in movedItems)
             {
-                string fullNameOfMovedFileSystemItem = System.IO.Path.Combine(sourceList.Tag.ToString(), ((item.Content as Grid).Children[1] as Label).Content.ToString());
-                string copyOfMovedFileSystemItem = System.IO.Path.Combine(destinationPath, ((item.Content as Grid).Children[1] as Label).Content.ToString());
-
+                string fullNameOfMovedFileSystemItem = item.Tag.ToString();
+                string copyOfMovedFileSystemItem = System.IO.Path.Combine(destinationPath, System.IO.Path.GetFileName(item.Tag.ToString()));
+           
                 if (Directory.Exists(fullNameOfMovedFileSystemItem))                    // if folder
                 {
                     if (System.IO.Path.GetPathRoot(fullNameOfMovedFileSystemItem) != System.IO.Path.GetPathRoot(copyOfMovedFileSystemItem))   // if drives is different
                     {
-                        //CopyFolders(fullNameOfMovedFileSystemItem, copyOfMovedFileSystemItem);
-                        //sourceList.Items.Remove(item);
-                        //if (sender is ListBox)
-                        //{
-                        //    destinationList.Items.Add(item);
-                        //}
-                        //GoToCurrentFolder(sourceList);
-                        //e.Handled = true;
                         Task task = CopyFoldersAsync(fullNameOfMovedFileSystemItem, copyOfMovedFileSystemItem);
                         e.Handled = true;
                         task.ContinueWith(t => this.Dispatcher.Invoke(() =>
@@ -440,8 +434,6 @@ namespace FManager
                     else
                     {
                         DirectoryInfo directory = new DirectoryInfo(fullNameOfMovedFileSystemItem);
-                        //try
-                        //{
                         directory.MoveTo(copyOfMovedFileSystemItem);
                         sourceList.Items.Remove(item);
                         if (sender is ListBox)
@@ -449,14 +441,6 @@ namespace FManager
                             destinationList.Items.Add(item);
                         }
                         e.Handled = true;
-                        //}
-                        //catch (Exception ex)
-                        //{
-                        //    MessageBox.Show(ex.Message);
-                        //    CopyFolders(fullNameOfMovedFileSystemItem, copyOfMovedFileSystemItem);
-                        //    e.Handled = true;
-                        //    return;
-                        //}
                     }
 
                 }
@@ -464,7 +448,7 @@ namespace FManager
                 {
                     FileInfo movedFile = new FileInfo(fullNameOfMovedFileSystemItem);
 
-                    if (System.IO.Path.GetPathRoot(fullNameOfMovedFileSystemItem) == System.IO.Path.GetPathRoot(copyOfMovedFileSystemItem))   // if drives is different
+                    if (System.IO.Path.GetPathRoot(fullNameOfMovedFileSystemItem) == System.IO.Path.GetPathRoot(copyOfMovedFileSystemItem))   // if drives is a same
                     {
                         movedFile.MoveTo(copyOfMovedFileSystemItem);
                         sourceList.Items.Remove(item);
@@ -503,6 +487,7 @@ namespace FManager
                         }));
                     }
                 }
+                item.Tag = copyOfMovedFileSystemItem;
             }
         }
 
@@ -521,24 +506,7 @@ namespace FManager
             }
         }
 
-        //private void CopyFolders(string sourceFolder, string targetFolder)
-        //{
-        //    DirectoryInfo sourceDir = new DirectoryInfo(sourceFolder);
-
-        //    DirectoryInfo directory = Directory.CreateDirectory(targetFolder);
-
-        //    foreach (var file in sourceDir.GetFiles())
-        //    {
-        //        file.CopyTo(System.IO.Path.Combine(targetFolder, file.Name));
-        //    }
-
-        //    foreach (var dir in sourceDir.GetDirectories())
-        //    {
-        //        CopyFolders(dir.FullName, System.IO.Path.Combine(targetFolder, dir.Name));
-        //    }
-        //}
-
-        private void CopyFoldersA(object pairOfPath)
+        private void CopyFolders(object pairOfPath)
         {
             string targetFolder = (pairOfPath as PairOfPath).DestinationPath;
 
@@ -553,13 +521,13 @@ namespace FManager
 
             foreach (var dir in sourceDir.GetDirectories())
             {
-                CopyFoldersA(new PairOfPath(dir.FullName, System.IO.Path.Combine(targetFolder, dir.Name)));
+                CopyFolders(new PairOfPath(dir.FullName, System.IO.Path.Combine(targetFolder, dir.Name)));
             }
         }
 
         private async Task CopyFoldersAsync(string sourceFolder, string targetFolder)
         {
-            await Task.Factory.StartNew(CopyFoldersA, new PairOfPath(sourceFolder, targetFolder));
+            await Task.Factory.StartNew(CopyFolders, new PairOfPath(sourceFolder, targetFolder));
         }
 
         private void AddContextMenuToItem(ListBoxItem item)
