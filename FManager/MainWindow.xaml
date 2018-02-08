@@ -9,8 +9,8 @@
     
     <Window.CommandBindings>
         <CommandBinding Command="Close" Executed="CommandClose_Executed"></CommandBinding>
-        <CommandBinding Command="Copy" Executed="CommandCopy_Executed"></CommandBinding>
-        <CommandBinding Command="Paste" Executed="CommandPaste_Executed"></CommandBinding>
+        <CommandBinding Command="Copy" Executed="CommandCopy_Executed" CanExecute="CommandBinding_CanExecuteCopy"></CommandBinding>
+        <CommandBinding Command="Paste" Executed="CommandPaste_Executed" CanExecute="CommandBinding_CanExecutePaste"></CommandBinding>
     </Window.CommandBindings>
 
     <Grid >

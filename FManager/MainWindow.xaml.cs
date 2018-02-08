@@ -25,6 +25,7 @@ namespace FManager
     /// </summary>
     public partial class MainWindow : Window
     {
+        // TODO: deleting more than one item from context menu
         // TODO: clip time of loading ico images
         // TODO: display progress bar during copying
         // TODO: Commands
@@ -326,12 +327,63 @@ namespace FManager
 
         private void CommandCopy_Executed(object sender, ExecutedRoutedEventArgs e)
         {
+            bool leftListIsActive = false;
+            bool rightListIsActive = false;
 
+            foreach (var item in leftList.SelectedItems)
+            {
+                if ((item as ListBoxItem).IsFocused)
+                {
+                    leftListIsActive = true;
+                    break;
+                }
+            }
+
+            foreach (var item in rightList.SelectedItems)
+            {
+                if ((item as ListBoxItem).IsFocused)
+                {
+                    rightListIsActive = true;
+                    break;
+                }
+            }
+
+            ListBox activeListBox = null; ;
+
+            if (leftListIsActive)
+            {
+                activeListBox = leftList;
+            }
+            else if (rightListIsActive)
+            {
+                activeListBox = rightList;
+            }
+
+            List<string> copiedItems = new List<string>(); ;
+            
+            foreach (var item in activeListBox.SelectedItems)
+            {
+                copiedItems.Add((item as ListBoxItem).Tag.ToString());
+            }
+            Clipboard.SetDataObject(copiedItems);
+        }
+
+        private void CommandBinding_CanExecuteCopy(object sender, CanExecuteRoutedEventArgs e)
+        {
+            if (leftList.SelectedItems.Count > 0 || rightList.SelectedItems.Count > 0)
+            {
+                e.CanExecute = true;
+            }
         }
 
         private void CommandPaste_Executed(object sender, ExecutedRoutedEventArgs e)
         {
 
+        }
+
+        private void CommandBinding_CanExecutePaste(object sender, CanExecuteRoutedEventArgs e)
+        {
+         
         }
 
         private void txtPath_KeyDown(object sender, KeyEventArgs e)
@@ -415,7 +467,7 @@ namespace FManager
             {
                 string fullNameOfMovedFileSystemItem = item.Tag.ToString();
                 string copyOfMovedFileSystemItem = System.IO.Path.Combine(destinationPath, System.IO.Path.GetFileName(item.Tag.ToString()));
-           
+
                 if (Directory.Exists(fullNameOfMovedFileSystemItem))                                     // if folder
                 {
                     if (System.IO.Path.GetPathRoot(fullNameOfMovedFileSystemItem) != System.IO.Path.GetPathRoot(copyOfMovedFileSystemItem))   // if drives is different
@@ -536,6 +588,15 @@ namespace FManager
             menuItemDelete.Header = "Delete";
             menuItemDelete.Click += MenuItemDelete_Click;
             menu.Items.Add(menuItemDelete);
+
+            MenuItem menuItemCopy = new MenuItem();
+            menuItemCopy.Command = ApplicationCommands.Copy;
+            menu.Items.Add(menuItemCopy);
+
+            MenuItem menuItemPaste = new MenuItem();
+            menuItemPaste.Command = ApplicationCommands.Paste;
+            menu.Items.Add(menuItemPaste);
+
             item.ContextMenu = menu;
         }
 
@@ -627,8 +688,8 @@ namespace FManager
 
         private void SearchFileItems(object pathAndSearchPattern)
         {
-          string searchPattern = (pathAndSearchPattern as PathAndSearchPattern).SearchPattern.ToLower();
-          string path = (pathAndSearchPattern as PathAndSearchPattern).Path.ToLower();
+            string searchPattern = (pathAndSearchPattern as PathAndSearchPattern).SearchPattern.ToLower();
+            string path = (pathAndSearchPattern as PathAndSearchPattern).Path.ToLower();
 
             if (path.Equals(""))                                                                            // if list of drives
             {
@@ -711,5 +772,6 @@ namespace FManager
                 tb.Foreground = System.Windows.Media.Brushes.Gray;
             }
         }
+
     }
 }
